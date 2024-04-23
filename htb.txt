@@ -1,0 +1,115 @@
+.MODEL SMALL
+
+DISP MACRO MSG
+
+MOV AH,09H
+LEA DX,MSG
+INT 21H
+
+ENDM
+
+.STACK 100H
+
+.DATA
+
+MSG1 DB 10,13, "******MENU******$"
+MSG2 DB 10,13, "1.HEX TO BCD $"
+MSG31 DB 10,13, "2.EXIT $"
+MSG4 DB 10,13, "ENTER YOU CHOICE : $"
+MSG5 DB 10,13, "ENTER 4 DIGIT HEX NUMBER : $"
+MSG6 DB 10,13, "EQIVALENT BCD IS : $"
+MSG9 DB 10,13, "INVALID CHOICE$"
+
+OP DB 10 DUP(?)
+
+.CODE
+
+MAIN: MOV AX, @DATA
+      MOV DS,AX
+
+
+MENU : DISP MSG1
+       DISP MSG2
+       DISP MSG31
+       DISP MSG4
+
+       MOV AH,01H
+       INT 21H
+
+       SUB AL,30H
+       CMP AL,01H
+       JE HEX
+
+       CMP AL,02H
+       JE EXIT
+       DISP MSG9
+       JMP MENU
+
+EXIT : MOV AH,4CH
+       INT 21H
+
+HEX : DISP MSG5
+      CALL INPUTP
+      DISP MSG6
+      CALL HEXP
+      JMP MENU
+
+INPUTP PROC
+     MOV CX,0404H
+     MOV AX,0000H
+     MOV BX,0000H
+
+IN1 : MOV AH,01H
+      INT 21H
+
+      CMP AL,30H
+      JB INVALID
+      CMP AL,39H
+      JG A1
+      SUB AL,30H
+      JMP INSERT
+
+A1 : CMP AL,41H
+     JB INVALID
+     CMP AL,46H
+     JG INVALID
+     SUB AL,37H
+     JMP INSERT
+
+INSERT : SHL BX,CL
+         ADD BL,AL
+         DEC CH
+         JNZ IN1
+
+         RET
+
+INVALID : DISP MSG9
+          JMP MENU
+INPUTP ENDP
+
+HEXP PROC
+
+   MOV AX,BX
+   MOV BX,0AH
+   MOV CL,00H
+
+B1 : MOV DX,00H
+     DIV BX
+     PUSH DX
+     INC CX
+     CMP AX,00H
+     JNE B1
+
+B2 : POP DX
+
+    ADD DL,30H
+    MOV AH,02H
+    INT 21H
+
+    DEC CL
+    JNZ B2
+    RET
+
+HEXP ENDP
+ 
+END
